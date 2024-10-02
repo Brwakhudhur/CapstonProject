@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matching Destinations</title>
+    <style>
+        /* Basic CSS for layout */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .content {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .actions button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+        .favorite {
+            background-color: #FFD700;
+            color: black;
+        }
+        .unfavorite {
+            background-color: #FFA07A;
+            color: white;
+        }
+        .logout {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+        }
+        .logout button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .logout button:hover {
+            background-color: #da190b;
+        }
+        .return {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+        }
+        .return button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .return button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>Welcome, <span id="username"></span></div>
+    </div>
+
+    <div class="content">
+        <h2>Matching Destinations</h2>
+        <table id="results-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Country Name</th>
+                    <th>Details</th>
+                    <th>Time of the Year</th>
+                    <th>Activities</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Results will be populated here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="logout">
+        <button onclick="logout()">Log out</button>
+    </div>
+
+    <div class="return">
+        <button onclick="returnToPreferences()">Return</button>
+    </div>
+    <script>
+
+
+    fetch('/auth/userinfo')
+    .then(response => response.json())
+    .then(userInfo => {
+        document.getElementById('username').textContent = userInfo.username;
+    })
+    .catch(error => {
+        console.error('Error fetching user info:', error);
+    });
+
+function populateResults() {
+    const resultsStr = sessionStorage.getItem('results');
+    const results = resultsStr ? JSON.parse(resultsStr) : [];
+    const resultsTableBody = document.getElementById('results-table').querySelector('tbody');
+    resultsTableBody.innerHTML = '';
+
+    if (!results.length) {
+        resultsTableBody.innerHTML = '<tr><td colspan="6">No matching destinations found.</td></tr>';
+        return;
+    }
+
+    results.forEach(result => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${result.id}</td>
+            <td>${result.countryName}</td>
+            <td>${result.details}</td>
+            <td>${result.timeOfYear}</td>
+            <td>${result.activities}</td>
+            <td class="actions">
+                <button class="favorite" onclick="toggleFavorite(${result.id}, true)">Favorite</button>
+                <button class="unfavorite" onclick="toggleFavorite(${result.id}, false)">Unfavorite</button>
+            </td>
+        `;
+        resultsTableBody.appendChild(row);
+    });
+}
+
+function toggleFavorite(destinationId, isFavorite) {
+    const method = isFavorite ? 'POST' : 'DELETE';
+    fetch(`/favorites/${destinationId}`, { method })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .catch(error => {
+            console.error(`Error ${isFavorite ? 'favoriting' : 'unfavoriting'} destination:`, error);
+        });
+}
+
+function logout() {
+    fetch('/auth/logout', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message === 'Logout successful') {
+                window.location.href = '/';
+            } else {
+                alert('Failed to log out');
+            }
+        })
+        .catch(error => {
+            console.error('Error during logout:', error);
+        });
+}
+
+function returnToPreferences() {
+    window.location.href = '/protected/TickTravelPref.html';
+}
+
+document.addEventListener('DOMContentLoaded', populateResults);
+</script>
+</body>
+</html>

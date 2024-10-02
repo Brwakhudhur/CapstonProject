@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Accounts</title>
+    <style>
+        /* Basic CSS for layout */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 {
+            margin: 0;
+        }
+        .content {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .actions button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+        .edit {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .delete {
+            background-color: #f44336;
+            color: white;
+        }
+        .logout {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+        }
+        .logout button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .logout button:hover {
+            background-color: #da190b;
+        }
+
+        /* Styles for the return button */
+        .return {
+            position: absolute;
+            bottom: 10px;
+            right: 10px; /* Align button to the right */
+        }
+        .return button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #007bff; /* Blue color for return button */
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .return button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            padding-top: 100px; /* Location of the box */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        /* Modal Content/Box */
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        /* The Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>User Accounts</h1>
+        <div>Admin logged in</div>
+    </div>
+
+    <div class="content">
+        <table id="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- User accounts will be populated here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="logout">
+        <button onclick="logout()">Log out</button>
+    </div>
+
+    <!-- Return Button -->
+    <div class="return">
+        <button onclick="returnToAdmin()">Return</button>
+    </div>
+
+    <!-- The Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Edit User</h2>
+            <form id="editForm">
+                <input type="hidden" id="editUserId">
+                <label for="editUsername">Username:</label>
+                <input type="text" id="editUsername" required><br><br>
+                <label for="editEmail">Email:</label>
+                <input type="email" id="editEmail" required><br><br>
+                <label for="editRole">Role:</label>
+                <select id="editRole" required>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                </select><br><br>
+                <button type="submit">Update</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchUsers();
+        });
+    
+        function fetchUsers() {
+            fetch('/auth/users') // Ensure this matches the route in your backend
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json(); // Parse the JSON data
+                })
+                .then(users => {
+                    // Populate the table with user data
+                    const userTableBody = document.getElementById('user-table').querySelector('tbody');
+                    userTableBody.innerHTML = '';
+                    users.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${user.id}</td>
+                            <td>${user.username}</td>
+                            <td>${user.email}</td>
+                            <td>${user.role}</td>
+                            <td class="actions">
+                                <button class="edit" onclick="showEditModal(${user.id}, '${user.username}', '${user.email}', '${user.role}')">Edit</button>
+                                <button class="delete" onclick="deleteUser(${user.id})">Delete</button>
+                            </td>
+                        `;
+                        userTableBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching users:', error);
+                });
+        }
+    
+        function showEditModal(id, username, email, role) {
+            document.getElementById('editUserId').value = id;
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editRole').value = role;
+            document.getElementById('editModal').style.display = "block";
+        }
+    
+        document.getElementById('editForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const userId = document.getElementById('editUserId').value;
+    const updatedUser = {
+        username: document.getElementById('editUsername').value,
+        email: document.getElementById('editEmail').value,
+        role: document.getElementById('editRole').value
+    };
+    fetch(`/auth/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedUser)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json(); // Parse JSON response
+    })
+    .then(data => {
+        if (data.message === 'User updated successfully') {
+            closeModal(); // Close the modal after a successful update
+            fetchUsers(); // Refresh the users table to show updated data
+        } else {
+            alert('Failed to update user');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating user:', error);
+    });
+});
+
+function closeModal() {
+    document.getElementById('editModal').style.display = "none"; // Ensure modal is hidden after updating
+}
+
+
+
+function deleteUser(id) {
+    if (confirm('Are you sure you want to delete this user?')) {
+        fetch(`/auth/users/${id}`, { // Correct the URL
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            fetchUsers(); // Refresh the list of users after deletion
+        })
+        .catch(error => {
+            console.error('Error deleting user:', error);
+        });
+    }
+}
+
+
+    
+        function returnToAdmin() {
+            window.location.href = 'AdminDatabase.html'; // Redirect to AdminDatabase.html
+        }
+    
+        function logout() {
+            fetch('/auth/logout', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = 'Index.html';
+                } else {
+                    alert('Logout failed');
+                }
+            })
+            .catch(error => {
+                console.error('Logout error:', error);
+            });
+        }
+    </script>
+    
+</body>
+</html>

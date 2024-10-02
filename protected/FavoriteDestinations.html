@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorite Destinations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .content {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .actions button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+        .unfavorite {
+            background-color: #FFA07A;
+            color: white;
+        }
+        .logout, .return {
+            position: absolute;
+            bottom: 10px;
+        }
+        .logout {
+            left: 10px;
+        }
+        .return {
+            right: 10px;
+        }
+        .logout button, .return button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .return button {
+            background-color: #28a745;
+        }
+        .logout button:hover {
+            background-color: #da190b;
+        }
+        .return button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>Admin logged in</div>
+    </div>
+
+    <div class="content">
+        <h2>Favorite Destinations</h2>
+        <table id="favorites-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Country Name</th>
+                    <th>Details</th>
+                    <th>Time of the Year</th>
+                    <th>Activities</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Favorite destinations will be populated here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="logout">
+        <button onclick="logout()">Log out</button>
+    </div>
+
+    <div class="return">
+        <button onclick="returnToPreferences()">Return</button>
+    </div>
+
+    <script>
+        // Fetch the username from the server
+        fetch('/auth/userinfo')
+            .then(response => response.json())
+            .then(userInfo => {
+                document.getElementById('username').textContent = userInfo.username;
+            })
+            .catch(error => {
+                console.error('Error fetching user info:', error);
+            });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchFavorites();
+        });
+
+        function fetchFavorites() {
+            fetch('/favorites/')
+                .then(response => response.json())
+                .then(favorites => {
+                    const favoritesTableBody = document.getElementById('favorites-table').querySelector('tbody');
+                    favoritesTableBody.innerHTML = '';
+                    favorites.forEach(favorite => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${favorite.id}</td>
+                            <td>${favorite.countryName}</td>
+                            <td>${favorite.details}</td>
+                            <td>${favorite.timeOfYear}</td>
+                            <td>${favorite.activities}</td>
+                            <td class="actions">
+                                <button class="unfavorite" onclick="toggleFavorite(${favorite.id}, false)">Unfavorite</button>
+                            </td>
+                        `;
+                        favoritesTableBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching favorite destinations:', error);
+                });
+        }
+
+        function toggleFavorite(destinationId, isFavorite) {
+            const method = isFavorite ? 'POST' : 'DELETE';
+            fetch(`/favorites/${destinationId}`, { method })
+                .then(response => {
+                    if (response.ok) {
+                        fetchFavorites();
+                    } else {
+                        alert('Failed to update favorite status');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating favorite status:', error);
+                });
+        }
+
+        function logout() {
+            fetch('/auth/logout', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Logout successful') {
+                        window.location.href = '/';
+                    } else {
+                        alert('Failed to log out');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during logout:', error);
+                });
+        }
+
+        function returnToPreferences() {
+            window.location.href = '/protected/TickTravelPref.html';
+        }
+    </script>
+</body>
+</html>

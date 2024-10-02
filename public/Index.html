@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            margin: 0 auto;
+            font-size: 24px;
+        }
+        .container {
+            margin-top: 50px;
+            text-align: center;
+        }
+        .info-box {
+            border: 2px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #fff;
+        }
+        .btn-primary {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="#">Personalized Destination Suggestion</a>
+            <div class="ml-auto">
+                <form class="form-inline" method="POST" id="login-form">
+                    <input class="form-control mr-sm-2" type="text" name="username" placeholder="Username" aria-label="Username" required>
+                    <input class="form-control mr-sm-2" type="password" name="password" placeholder="Password" aria-label="Password" required>
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Login</button>
+                    <a class="btn btn-outline-primary my-2 my-sm-0 ml-2" href="Register.html">Register</a>
+                </form>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="info-box">
+            <h2>This web application is designed to provide personalized travel recommendations to you based on your preferences</h2>
+            <a class="btn btn-primary" href="Register.html">Register</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            console.log('Document is ready');
+
+            $('#login-form').on('submit', function(e) {
+                e.preventDefault();
+                console.log('Login form submitted');
+
+                const formData = {
+                    username: $('input[name="username"]').val(),
+                    password: $('input[name="password"]').val()
+                };
+                console.log('Form data:', formData);
+
+                $.post('/auth/login', formData, function(response) {
+                    console.log('Login response:', response);
+
+                    if (response.message === 'Login successful') {
+                        alert('Login successful! Redirecting...');
+                        console.log('User role:', response.role);
+
+                        if (response.role === 'admin') {
+                            console.log('Redirecting to /protected/AdminDatabase.html');
+                            window.location.href = '/protected/AdminDatabase.html';
+                        } else {
+                            console.log('Redirecting to /protected/TickTravelPref.html');
+                            window.location.href = '/protected/TickTravelPref.html';
+                        }
+                    } else {
+                        alert(response.message);
+                        console.log('Login failed:', response.message);
+                    }
+                }).fail(function(xhr) {
+                    console.log('Login request failed:', xhr);
+
+                    if (xhr.status === 401) {
+                        alert('Unauthorized: ' + xhr.responseJSON.message);
+                        console.log('Unauthorized:', xhr.responseJSON.message);
+                    } else {
+                        alert('Login failed: Internal server error.');
+                        console.log('Login failed: Internal server error.');
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

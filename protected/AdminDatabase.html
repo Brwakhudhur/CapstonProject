@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destination Database Management</title>
+    <style>
+        /* Basic CSS for layout */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 {
+            margin: 0;
+        }
+        .content {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+            text-align: center;
+        }
+        .content button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .content button:hover {
+            background-color: #45a049;
+        }
+        .logout {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+        }
+        .logout button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .logout button:hover {
+            background-color: #da190b;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Destination Database Management</h1>
+        <div>Admin logged in</div>
+    </div>
+
+    <div class="content">
+        <button onclick="redirectTo('AddND.html')">Add New Destination</button>
+        <button onclick="redirectTo('ListOfDestinations.html')">List of Destinations</button>
+        <button onclick="redirectTo('UserAccounts.html')">User Accounts</button>
+    </div>
+
+    <div class="logout">
+        <button onclick="logout()">Log out</button>
+    </div>
+
+    <script>
+
+
+
+        // Function to redirect to another page
+        function redirectTo(page) {
+            window.location.href = page;
+        }
+
+        // Function to log out (redirect to Index.html)
+ function logout() {
+    // Send a POST request to the logout route
+    fetch('/auth/logout', { method: 'POST' })
+        .then(response => {
+            if (response.ok) {
+                // On successful logout, redirect to the main page
+                window.location.href = 'Index.html';
+            } else {
+                alert('Logout failed');
+            }
+        })
+        .catch(error => {
+            console.error('Logout error:', error);
+        });
+}
+
+    </script>
+</body>
+</html>

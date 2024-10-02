@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            margin: 0 auto;
+            font-size: 24px;
+        }
+        .container {
+            margin-top: 50px;
+            max-width: 500px;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="#">Register</a>
+        </div>
+    </nav>
+    <div class="container">
+        <form id="register-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Confirm Password</label>
+                <input type="password" class="form-control" id="confirm-password" name="confirmPassword" placeholder="Confirm password" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
+            </div>
+            <div class="btn-container">
+                <a class="btn btn-secondary" href="Index.html">Cancel</a>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#register-form').on('submit', function(e) {
+                e.preventDefault();
+                const password = $('#password').val();
+                const confirmPassword = $('#confirm-password').val();
+                if (password !== confirmPassword) {
+                    alert('Passwords do not match');
+                    return;
+                }
+                const formData = {
+                    username: $('#username').val(),
+                    email: $('#email').val(),
+                    password: password
+                };
+                console.log('Form Data:', formData); // Debugging: Log form data
+                $.post('/auth/register', formData, function(response) {
+                    console.log('Registration Response:', response); // Debugging: Log registration response
+                    if (response.message === 'User registered successfully') {
+                        window.location.href = 'Index.html';
+                    } else {
+                        alert(response.message);
+                    }
+                }).fail(function(xhr) {
+                    console.error('Registration Error:', xhr); // Debugging: Log registration failure
+                    alert(xhr.responseJSON.message || 'Internal server error');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

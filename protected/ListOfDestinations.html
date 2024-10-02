@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List of Destinations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .content {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .actions button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+        .edit {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .delete {
+            background-color: #f44336;
+            color: white;
+        }
+        .logout {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+        }
+        .logout button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .logout button:hover {
+            background-color: #da190b;
+        }
+        .return {
+            position: absolute;
+            bottom: 10px;
+            right: 10px; /* Move button to the right side */
+        }
+        .return button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #007bff; /* Change color to blue */
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .return button:hover {
+            background-color: #0056b3; /* Darker shade on hover */
+        }
+        /* Add styles for the modal */
+        #editModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Custom message style */
+        #messageBox {
+            display: none;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>List of Destinations</h1>
+        <div>Admin logged in</div>
+    </div>
+
+    <div class="content">
+        <div id="messageBox"></div> <!-- Message box for notifications -->
+        <table id="destinations-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Country Name</th>
+                    <th>Details</th>
+                    <th>Time of the Year</th>
+                    <th>Activities</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Destinations will be populated here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add "Return" button -->
+    <div class="return">
+        <button onclick="returnToAdmin()">Return</button>
+    </div>
+
+    <div class="logout">
+        <button onclick="logout()">Log out</button>
+    </div>
+
+    <!-- Modal for editing destination -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Edit Destination</h2>
+            <form id="editForm">
+                <input type="hidden" id="editDestinationId">
+                <div class="form-group">
+                    <label for="editCountryName">Country Name:</label>
+                    <input type="text" id="editCountryName" name="countryName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDetails">Details:</label>
+                    <textarea id="editDetails" name="details" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editTimeOfYear">Time of the Year:</label>
+                    <input type="text" id="editTimeOfYear" name="timeOfYear" required>
+                </div>
+                <div class="form-group">
+                    <label for="editActivities">Activities:</label>
+                    <textarea id="editActivities" name="activities" required></textarea>
+                </div>
+                <button type="submit" class="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchDestinations();
+
+            document.getElementById('editForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const destinationId = document.getElementById('editDestinationId').value;
+                const updatedDestination = {
+                    countryName: document.getElementById('editCountryName').value,
+                    details: document.getElementById('editDetails').value,
+                    timeOfYear: document.getElementById('editTimeOfYear').value,
+                    activities: document.getElementById('editActivities').value
+                };
+                fetch(`/destinations/${destinationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedDestination)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Destination updated successfully') {
+                        showMessage('Destination updated successfully!', 'success');
+                        closeModal();
+                        fetchDestinations();
+                    } else {
+                        alert('Failed to update destination');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating destination:', error);
+                });
+            });
+        });
+
+        function fetchDestinations() {
+            console.log('Fetching destinations...');
+            fetch('/destinations')
+                .then(response => {
+                    console.log('Response received:', response);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(destinations => {
+                    console.log('Destinations fetched:', destinations);
+                    const destinationsTableBody = document.getElementById('destinations-table').querySelector('tbody');
+                    destinationsTableBody.innerHTML = '';
+                    destinations.forEach(destination => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${destination.id}</td>
+                            <td>${destination.countryName}</td>
+                            <td>${destination.details}</td>
+                            <td>${destination.timeOfYear}</td>
+                            <td>${destination.activities}</td>
+                            <td class="actions">
+                                <button class="edit" onclick="editDestination(${destination.id}, '${destination.countryName}', '${destination.details}', '${destination.timeOfYear}', '${destination.activities}')">Edit</button>
+                                <button class="delete" onclick="deleteDestination(${destination.id})">Delete</button>
+                            </td>
+                        `;
+                        destinationsTableBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching destinations:', error);
+                });
+        }
+
+        function editDestination(id, countryName, details, timeOfYear, activities) {
+            document.getElementById('editDestinationId').value = id;
+            document.getElementById('editCountryName').value = countryName;
+            document.getElementById('editDetails').value = details;
+            document.getElementById('editTimeOfYear').value = timeOfYear;
+            document.getElementById('editActivities').value = activities;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function deleteDestination(id) {
+            if (confirm('Are you sure you want to delete this destination?')) {
+                console.log('Deleting destination with ID:', id);
+                fetch(`/destinations/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    console.log('Delete response received:', response);
+                    if (response.ok) {
+                        showMessage('Destination deleted successfully!', 'success');
+                        fetchDestinations();
+                    } else {
+                        alert('Failed to delete destination');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting destination:', error);
+                });
+            }
+        }
+
+        function returnToAdmin() {
+            window.location.href = 'AdminDatabase.html'; // Redirect to the AdminDatabase.html page
+        }
+
+        function logout() {
+            fetch('/auth/logout', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = 'Index.html';
+                } else {
+                    alert('Logout failed');
+                }
+            })
+            .catch(error => {
+                console.error('Logout error:', error);
+            });
+        }
+
+        function showMessage(message, type) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000); // Hide after 3 seconds
+        }
+    </script>
+</body>
+</html>

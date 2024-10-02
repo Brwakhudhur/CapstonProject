@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tick Your Travel Preferences</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .preferences {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+            text-align: center;
+        }
+        .preferences h2 {
+            margin-bottom: 20px;
+        }
+        .checkbox-columns {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .checkbox-group {
+            flex: 1;
+            text-align: left;
+        }
+        .checkbox-group label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .buttons {
+            text-align: center;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .buttons button:hover {
+            background-color: #45a049;
+        }
+        .logout-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .logout-button:hover {
+            background-color: #da190b;
+        }
+        .account-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .account-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>Welcome, <span id="username"></span></div>
+        <button class="logout-button" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="preferences">
+        <h2>Tick Your Travel Preferences</h2>
+
+        <div class="checkbox-columns">
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="preferences" value="beach"> Beach
+                </label>
+                <label>
+                    <input type="checkbox" name="preferences" value="nightlife"> Nightlife
+                </label>
+                <label>
+                    <input type="checkbox" name="preferences" value="nature"> Nature
+                </label>
+                <label>
+                    <input type="checkbox" name="preferences" value="sahara"> Sahara
+                </label>
+            </div>
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="preferences" value="mountain"> Mountain
+                </label>
+                <label>
+                    <input type="checkbox" name="preferences" value="solo-traveler"> Solo Traveler
+                </label>
+                <label>
+                    <input type="checkbox" name="preferences" value="sightseeing"> Sightseeing
+                </label>
+                <label>
+                    <input type="checkbox" name="preferences" value="resorts"> Resorts
+                </label>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button type="button" onclick="cancel()">Cancel</button>
+            <button type="button" onclick="submitPreferences()">Submit</button>
+        </div>
+
+        <div>
+            <h3>Would you like to see your Favorited Destinations?</h3>
+            <button onclick="redirectTo('FavoriteDestinations.html')">Favorite Destinations</button>
+        </div>
+
+        <div>
+            <button class="account-button" onclick="redirectTo('MyAccount.html')">My Account</button>
+        </div>
+    </div>
+
+    <script>
+        fetch('/auth/userinfo')
+            .then(response => response.json())
+            .then(userInfo => {
+                document.getElementById('username').textContent = userInfo.username;
+            })
+            .catch(error => {
+                console.error('Error fetching user info:', error);
+            });
+
+        function cancel() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+
+        function submitPreferences() {
+            const checkboxes = document.querySelectorAll('input[name="preferences"]');
+            const selectedPreferences = Array.from(checkboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+
+            fetch('/destinations/match-destinations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ preferences: selectedPreferences })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                } else {
+                    sessionStorage.setItem('results', JSON.stringify(data));
+                    window.location.href = 'Results.html';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching matching destinations:', error);
+            });
+        }
+
+        function redirectTo(page) {
+            window.location.href = page;
+        }
+
+        function logout() {
+            fetch('/auth/logout', { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = 'Index.html';
+                    } else {
+                        alert('Logout failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                });
+        }
+    </script>
+</body>
+</html>
